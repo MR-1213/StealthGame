@@ -8,7 +8,6 @@ public class PlayerManager : MonoBehaviour
     InputManager inputManager;
     PlayerLocomotion playerLocomotion;
     CameraManager cameraManager;
-    StageObjectManager stageObjectManager;
 
     public bool isInteracting; //落下と着地のモーションのためのフラグ
 
@@ -18,13 +17,12 @@ public class PlayerManager : MonoBehaviour
         inputManager = GetComponent<InputManager>();
         playerLocomotion = GetComponent<PlayerLocomotion>();
         cameraManager = FindObjectOfType<CameraManager>();
-        stageObjectManager = FindObjectOfType<StageObjectManager>();
+        Cursor.lockState = CursorLockMode.Locked; //カーソルを画面中央に固定 => 画面外に出ないようにする
     }
 
     private void Update()
     {
         inputManager.HandleAllInputs();
-        stageObjectManager.GetClosestObject();
     }
 
     /* 一定時間(0.02秒)ごとに呼び出されるUpdate関数 Edit,ProjectSetting,Time,FixedTimestepより設定可能 */ 
