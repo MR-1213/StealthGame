@@ -17,12 +17,11 @@ public class EnemyManager : MonoBehaviour
     {
         MoveToPoint_1,
         MoveToPoint_2,
-        DoNothing,
-
+        stopPoint1,
+        stopPoint2,
     }
 
     State currentState = State.MoveToPoint_1;
-    State targetState = State.DoNothing;
     bool stateEnter = false;
     float stateTime = 0;
 
@@ -60,10 +59,15 @@ public class EnemyManager : MonoBehaviour
                 {
                     navMeshAgent.SetDestination(point_1.position);
                     navMeshAgent.speed = 1.7f;
-                    targetState = State.DoNothing;
+                }
+
+                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
+                {
+                    ChangeState(State.stopPoint1);
+                    return;
                 }
                 
-                break;
+                return;
             }
             
             case State.MoveToPoint_2: {
@@ -72,16 +76,46 @@ public class EnemyManager : MonoBehaviour
                 {
                     navMeshAgent.SetDestination(point_2.position);
                     navMeshAgent.speed = 2.5f;
-                    targetState = State.DoNothing;
+                }
+
+                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
+                {
+                    ChangeState(State.stopPoint2);
+                    return;
                 }
                 
-                break;
+                return;
             }
 
-            case State.DoNothing: {
+            case State.stopPoint1: {
+                
+                if(stateTime >= 5.0f)
+                {
+                    ChangeState(State.MoveToPoint_2);
+                    return; 
+                }
+                navMeshAgent.speed = 0f;
+                return;
+            }
 
-                break;
+            case State.stopPoint2: {
+                
+                if(stateTime >= 5.0f)
+                {
+                    ChangeState(State.MoveToPoint_1);
+                    return;
+                }
+                navMeshAgent.speed = 0f;
+                return;
             }
         }
+    }
+
+    private void LateUpdate() 
+    {
+        if(stateTime != 0)
+        {
+            stateEnter = false;
+        }    
     }
 }
