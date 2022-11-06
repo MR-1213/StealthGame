@@ -30,6 +30,7 @@ public class EnemyManager : MonoBehaviour
     }
 
     State currentState = State.MoveToPoint_1;
+    State lastState = State.MoveToPoint_1;
     bool stateEnter = false;
     float stateTime = 0;
     bool isMissingPlayer;
@@ -52,6 +53,10 @@ public class EnemyManager : MonoBehaviour
 
     public void ChangeMoveToPlayerState()
     {
+        if(currentState != State.MoveToPlayer)
+        {
+            lastState = currentState;
+        }
         currentState = State.MoveToPlayer;
         stateEnter = true;
         isMissingPlayer = false;
@@ -189,12 +194,12 @@ public class EnemyManager : MonoBehaviour
                 if(stateEnter)
                 {
                     navMeshAgent.SetDestination(pointPlayer.position);
-                    navMeshAgent.speed = 3.0f;
+                    navMeshAgent.speed = 5.0f;
                 }
 
                 if(isMissingPlayer)
                 {
-                    ChangeState(State.MoveToPoint_1);
+                    ChangeState(lastState);
                     return;
                 }
 
