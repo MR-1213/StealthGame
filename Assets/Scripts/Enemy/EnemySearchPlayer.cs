@@ -9,6 +9,7 @@ public class EnemySearchPlayer : MonoBehaviour
 
     [SerializeField]
     private SphereCollider searchArea;
+    
     public float searchAngle = 120f;
     public LayerMask obstacleLayer;
 
@@ -40,6 +41,10 @@ public class EnemySearchPlayer : MonoBehaviour
             {
                 enemyManager.ChangeMoveToPlayerState();
             }
+            else
+            {
+                StartCoroutine(enemyManager.MissingPlayer());
+            }
         }    
     }
 
@@ -47,15 +52,16 @@ public class EnemySearchPlayer : MonoBehaviour
     {
         if(other.tag == "Player")
         {
-            enemyManager.MissingPlayer();
+            StartCoroutine(enemyManager.MissingPlayer());
         }    
     }
 
-    #if UNITY_EDITOR
+    /*#if UNITY_EDITOR
     //　サーチする角度表示
     private void OnDrawGizmos() {
         Handles.color = Color.red;
         Handles.DrawSolidArc(transform.position, Vector3.up, Quaternion.Euler(0f, -searchAngle, 0f) * transform.forward, searchAngle * 2f, searchArea.radius);
     }
     #endif
+    */
 }

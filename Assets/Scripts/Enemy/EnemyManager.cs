@@ -64,8 +64,9 @@ public class EnemyManager : MonoBehaviour
         Debug.Log(currentState.ToString());
     }
 
-    public void MissingPlayer()
+    public IEnumerator MissingPlayer()
     {
+        yield return new WaitForSeconds(3.0f);
         isMissingPlayer = true;
     }
     private void Update()
