@@ -7539,7 +7539,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 2
-  m_Radius: 5
+  m_Radius: 10
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &1308375814
 MonoBehaviour:
@@ -7554,7 +7554,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   searchArea: {fileID: 1308375813}
-  searchAngle: 120
+  searchAngle: 90
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 1
