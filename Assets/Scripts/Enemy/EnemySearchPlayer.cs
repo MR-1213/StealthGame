@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 using UnityEditor;
 
 public class EnemySearchPlayer : MonoBehaviour
@@ -40,6 +41,14 @@ public class EnemySearchPlayer : MonoBehaviour
             if(angle <= searchAngle)
             {
                 enemyManager.ChangeMoveToPlayerState();
+                
+                double eachDistance = Math.Sqrt(Math.Pow(playerDirection.x, 2) + Math.Pow(playerDirection.z, 2));
+                if(eachDistance < (searchArea.radius / 2.0f))
+                {
+                    transform.rotation = Quaternion.LookRotation(playerDirection);
+                    enemyManager.ChangeAttackPlayerState();
+                }
+                
             }
             else
             {

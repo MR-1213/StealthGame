@@ -2,7 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using System;
+using UnityEngine.UI;
 using UnityEngine.AI;
+using DG.Tweening;
 
 public class EnemyManager : MonoBehaviour
 {
@@ -16,6 +18,8 @@ public class EnemyManager : MonoBehaviour
     NavMeshAgent navMeshAgent;
     Animator animator;
 
+    public Image flushImage;
+
     enum State
     {
         MoveToPoint_1,
@@ -27,6 +31,7 @@ public class EnemyManager : MonoBehaviour
         stopPoint2,
         stopPoint3,
         stopPoint4,
+        attackPlayer,
     }
 
     State currentState = State.MoveToPoint_1;
@@ -35,7 +40,13 @@ public class EnemyManager : MonoBehaviour
     float stateTime = 0;
     bool isMissingPlayer;
 
-    void Start()
+    enum Animation_State
+    {
+        Patrol = 0,
+        Shoot = 1,
+    }
+
+    private void Start()
     {
         navMeshAgent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
@@ -51,9 +62,14 @@ public class EnemyManager : MonoBehaviour
         Debug.Log(currentState.ToString());
     }
 
+    private void ChangeAnimationState(Animation_State state)
+    {
+        animator.SetInteger("ID", (int)state);
+    }
+
     public void ChangeMoveToPlayerState()
     {
-        if(currentState != State.MoveToPlayer)
+        if(currentState != State.MoveToPlayer && currentState != State.attackPlayer)
         {
             lastState = currentState;
         }
@@ -62,6 +78,18 @@ public class EnemyManager : MonoBehaviour
         isMissingPlayer = false;
         stateTime = 0;
         Debug.Log(currentState.ToString());
+    }
+
+    public void ChangeAttackPlayerState()
+    {
+        if(currentState != State.MoveToPlayer && currentState != State.attackPlayer)
+        {
+            lastState = currentState;
+        }
+        currentState = State.attackPlayer;
+        stateEnter = true;
+        isMissingPlayer = false;
+        stateTime = 0;
     }
 
     public IEnumerator MissingPlayer()
@@ -91,7 +119,7 @@ public class EnemyManager : MonoBehaviour
                     ChangeState(State.stopPoint1);
                     return;
                 }
-                
+                ChangeAnimationState(Animation_State.Patrol);
                 return;
             }
             
@@ -108,7 +136,7 @@ public class EnemyManager : MonoBehaviour
                     ChangeState(State.stopPoint2);
                     return;
                 }
-                
+                ChangeAnimationState(Animation_State.Patrol);
                 return;
             }
 
@@ -125,7 +153,7 @@ public class EnemyManager : MonoBehaviour
                     ChangeState(State.stopPoint3);
                     return;
                 }
-                
+                ChangeAnimationState(Animation_State.Patrol);
                 return;
             }
 
@@ -142,7 +170,7 @@ public class EnemyManager : MonoBehaviour
                     ChangeState(State.stopPoint4);
                     return;
                 }
-                
+                ChangeAnimationState(Animation_State.Patrol);
                 return;
             }
 
@@ -153,7 +181,7 @@ public class EnemyManager : MonoBehaviour
                     ChangeState(State.MoveToPoint_2);
                     return; 
                 }
-
+                ChangeAnimationState(Animation_State.Patrol);
                 return;
             }
 
@@ -164,7 +192,7 @@ public class EnemyManager : MonoBehaviour
                     ChangeState(State.MoveToPoint_3);
                     return;
                 }
-
+                ChangeAnimationState(Animation_State.Patrol);
                 return;
             }
 
@@ -175,7 +203,7 @@ public class EnemyManager : MonoBehaviour
                     ChangeState(State.MoveToPoint_4);
                     return;
                 }
-
+                ChangeAnimationState(Animation_State.Patrol);
                 return;
             }
 
@@ -186,7 +214,7 @@ public class EnemyManager : MonoBehaviour
                     ChangeState(State.MoveToPoint_1);
                     return;
                 }
-
+                ChangeAnimationState(Animation_State.Patrol);
                 return;
             }
 
@@ -195,7 +223,7 @@ public class EnemyManager : MonoBehaviour
                 if(stateEnter)
                 {
                     navMeshAgent.SetDestination(pointPlayer.position);
-                    navMeshAgent.speed = 5.0f;
+                    navMeshAgent.speed = 3.5f;
                 }
 
                 if(isMissingPlayer)
@@ -203,7 +231,19 @@ public class EnemyManager : MonoBehaviour
                     ChangeState(lastState);
                     return;
                 }
+                ChangeAnimationState(Animation_State.Patrol);
+                return;
+            }
 
+            case State.attackPlayer: {
+
+                if(stateEnter)
+                {
+                    navMeshAgent.speed = 0;
+                    ChangeAnimationState(Animation_State.Shoot);
+                    
+                    Debug.Log("攻撃！");
+                }
                 return;
             }
         }

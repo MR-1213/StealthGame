@@ -102,9 +102,9 @@ public class PlayerLocomotion : MonoBehaviour
         }
 
         Quaternion targetRotation = Quaternion.LookRotation(targetDirection);
-        Quaternion playerRotaiton = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime); //体が回るように方向転換するようにする
+        Quaternion playerRotatiton = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime); //体が回るように方向転換するようにする
 
-        transform.rotation = playerRotaiton;
+        transform.rotation = playerRotatiton;
     }
 
     public void HandleFallAndLanding()
