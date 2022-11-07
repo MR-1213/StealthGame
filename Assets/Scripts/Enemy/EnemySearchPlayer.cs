@@ -48,7 +48,10 @@ public class EnemySearchPlayer : MonoBehaviour
                     transform.rotation = Quaternion.LookRotation(playerDirection);
                     enemyManager.ChangeAttackPlayerState();
                 }
-                
+                else
+                {
+                    StartCoroutine(enemyManager.MissingPlayer());
+                }
             }
             else
             {
