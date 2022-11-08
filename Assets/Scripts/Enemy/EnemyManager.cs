@@ -13,45 +13,42 @@ public class EnemyManager : MonoBehaviour
     public Transform point_2;
     public Transform point_3;
     public Transform point_4;
-    public Transform pointPlayer;
+    public Transform point_Toilet;
+    public Transform point_Player;
 
     NavMeshAgent navMeshAgent;
     Animator animator;
 
-    public Image flushImage;
+    State currentState = State.MoveToDestination;
+    State targetState = State.DoNothing;
+
+    bool stateEnter = false;
+    float stateTime = 0;
+    int lastAction = 1;
+
+    Dictionary<Desire, float> desireDictionary = new Dictionary<Desire, float>();
 
     enum State
     {
-        MoveToPoint_1,
-        MoveToPoint_2,
-        MoveToPoint_3,
-        MoveToPoint_4,
-        MoveToPlayer,
-        stopPoint1,
-        stopPoint2,
-        stopPoint3,
-        stopPoint4,
-        attackPlayer,
+        MoveToDestination,
+        GoToToilet,
+        ChasePlayer,
+        AttackPlayer,
+        DoNothing,
     }
-
-    State currentState = State.MoveToPoint_1;
-    State lastState = State.MoveToPoint_1;
-    bool stateEnter = false;
-    float stateTime = 0;
-    bool isMissingPlayer;
 
     enum Animation_State
     {
         Patrol = 0,
-        Shoot = 1,
+        Toilet = 1,
+        Attack = 2,
     }
 
-    private void Start()
+    enum Desire
     {
-        navMeshAgent = GetComponent<NavMeshAgent>();
-        animator = GetComponent<Animator>();
-
-        ChangeState(State.MoveToPoint_1);
+        Toilet,
+        Chase,
+        Attack,
     }
 
     private void ChangeState(State newState)
@@ -67,186 +64,103 @@ public class EnemyManager : MonoBehaviour
         animator.SetInteger("ID", (int)state);
     }
 
-    public void ChangeMoveToPlayerState()
+    private void Start()
     {
-        if(currentState != State.MoveToPlayer && currentState != State.attackPlayer)
+        navMeshAgent = GetComponent<NavMeshAgent>();
+        animator = GetComponent<Animator>();
+        foreach (Desire desire in Enum.GetValues(typeof(Desire)))
         {
-            lastState = currentState;
-        }
-        currentState = State.MoveToPlayer;
-        stateEnter = true;
-        isMissingPlayer = false;
-        stateTime = 0;
-        Debug.Log(currentState.ToString());
-    }
+            desireDictionary.Add(desire, 0f);
+        } 
 
-    public void ChangeAttackPlayerState()
-    {
-        if(currentState != State.MoveToPlayer && currentState != State.attackPlayer)
-        {
-            lastState = currentState;
-        }
-        currentState = State.attackPlayer;
-        stateEnter = true;
-        isMissingPlayer = false;
-        stateTime = 0;
+        ChangeState(State.MoveToDestination);   
     }
-
-    public IEnumerator MissingPlayer()
-    {
-        yield return new WaitForSeconds(3.0f);
-        isMissingPlayer = true;
-    }
-    private void Update()
+    
+    private void Update() 
     {
         stateTime += Time.deltaTime;
         float speed = navMeshAgent.velocity.magnitude;
 
         animator.SetFloat("EnemySpeed", speed);
 
+        if(currentState != State.GoToToilet)
+        {
+            desireDictionary[Desire.Toilet] += Time.deltaTime / 60.0f;
+        }
+
+        IOrderedEnumerable<KeyValuePair<Desire, float>> sortedDesire = desireDictionary.OrderByDescending(i => i.Value);
+
         switch (currentState)
         {
-            case State.MoveToPoint_1: {
-
-                if(stateEnter)
-                {
-                    navMeshAgent.SetDestination(point_1.position);
-                    navMeshAgent.speed = 1.7f;
-                }
-
-                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
-                {
-                    ChangeState(State.stopPoint1);
-                    return;
-                }
-                ChangeAnimationState(Animation_State.Patrol);
-                return;
-            }
-            
-            case State.MoveToPoint_2: {
-
-                if(stateEnter)
-                {
-                    navMeshAgent.SetDestination(point_2.position);
-                    navMeshAgent.speed = 2.5f;
-                }
-
-                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
-                {
-                    ChangeState(State.stopPoint2);
-                    return;
-                }
-                ChangeAnimationState(Animation_State.Patrol);
-                return;
-            }
-
-            case State.MoveToPoint_3: {
-
-                if(stateEnter)
-                {
-                    navMeshAgent.SetDestination(point_3.position);
-                    navMeshAgent.speed = 2.5f;
-                }
-
-                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
-                {
-                    ChangeState(State.stopPoint3);
-                    return;
-                }
-                ChangeAnimationState(Animation_State.Patrol);
-                return;
-            }
-
-            case State.MoveToPoint_4: {
-
-                if(stateEnter)
-                {
-                    navMeshAgent.SetDestination(point_4.position);
-                    navMeshAgent.speed = 2.5f;
-                }
-
-                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
-                {
-                    ChangeState(State.stopPoint4);
-                    return;
-                }
-                ChangeAnimationState(Animation_State.Patrol);
-                return;
-            }
-
-            case State.stopPoint1: {
+            case State.MoveToDestination: {
                 
+                if(stateEnter)
+                {
+                    var topDesireElement = sortedDesire.ElementAt(0);
+
+                    if(topDesireElement.Value >= 1.0f)
+                    {
+                        switch(topDesireElement.Key)
+                        {
+                            case Desire.Toilet:
+                                navMeshAgent.SetDestination(point_Toilet.position);
+                                navMeshAgent.speed = 2.5f;
+                                targetState = State.GoToToilet;
+                                break;
+                            case Desire.Chase:
+                                navMeshAgent.SetDestination(point_Player.position);
+                                navMeshAgent.speed = 3.5f;
+                                targetState = State.ChasePlayer;
+                                break;
+                            case Desire.Attack:
+                                navMeshAgent.speed = 0;
+                                targetState = State.AttackPlayer;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        switch(lastAction)
+                        {
+                            case 1:
+                                navMeshAgent.SetDestination(point_1.position);
+                                break;
+                            case 2:
+                                navMeshAgent.SetDestination(point_2.position);
+                                break;
+                            case 3:
+                                navMeshAgent.SetDestination(point_3.position);
+                                break;
+                            case 4:
+                                navMeshAgent.SetDestination(point_4.position);
+                                break;
+                        }
+                        navMeshAgent.speed = 2.0f;
+                        targetState = State.DoNothing;
+                    }
+                }
+
+                ChangeAnimationState(Animation_State.Patrol);
+                if(navmeshAgent.remainingDistance <= 0.01f && !navmeshAgent.pathPending)
+                {
+                    ChangeState(targetState);
+                    return;
+                }
+
+                return;
+            }
+
+            case State.DoNothing: {
+
                 if(stateTime >= 5.0f)
                 {
-                    ChangeState(State.MoveToPoint_2);
-                    return; 
+                    ChangeState(State.MoveToDestination);
+                    return;
                 }
-                ChangeAnimationState(Animation_State.Patrol);
-                return;
-            }
-
-            case State.stopPoint2: {
                 
-                if(stateTime >= 5.0f)
-                {
-                    ChangeState(State.MoveToPoint_3);
-                    return;
-                }
-                ChangeAnimationState(Animation_State.Patrol);
                 return;
             }
-
-            case State.stopPoint3: {
-                
-                if(stateTime >= 3.0f)
-                {
-                    ChangeState(State.MoveToPoint_4);
-                    return;
-                }
-                ChangeAnimationState(Animation_State.Patrol);
-                return;
-            }
-
-            case State.stopPoint4: {
-                
-                if(stateTime >= 4.0f)
-                {
-                    ChangeState(State.MoveToPoint_1);
-                    return;
-                }
-                ChangeAnimationState(Animation_State.Patrol);
-                return;
-            }
-
-            case State.MoveToPlayer: {
-
-                if(stateEnter)
-                {
-                    navMeshAgent.SetDestination(pointPlayer.position);
-                    navMeshAgent.speed = 3.5f;
-                }
-
-                if(isMissingPlayer)
-                {
-                    ChangeState(lastState);
-                    return;
-                }
-                ChangeAnimationState(Animation_State.Patrol);
-                return;
-            }
-
-            case State.attackPlayer: {
-
-                if(stateEnter)
-                {
-                    navMeshAgent.speed = 0;
-                    ChangeAnimationState(Animation_State.Shoot);
-                    
-                    Debug.Log("攻撃！");
-                }
-                return;
-            }
-        }
+        }       
     }
 
     private void LateUpdate() 
