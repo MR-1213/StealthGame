@@ -6,7 +6,7 @@ public class SecurityGateManager : MonoBehaviour
 {
     LineRenderer lineRenderer;
     Vector3 direction;
-    
+    public LayerMask playerLayer;
     public float length;
 
     private void Start() 
@@ -25,6 +25,18 @@ public class SecurityGateManager : MonoBehaviour
         lineRenderer.startColor = Color.red;
         lineRenderer.endColor = Color.red;
         lineRenderer.SetPositions(positions);
+    }
+
+    private void Update() 
+    {
+        RaycastHit hit;
+        Vector3 rayCastOrigin = transform.position;
+
+        if(Physics.Raycast(rayCastOrigin, direction, out hit, length, playerLayer))
+        {
+            Debug.DrawRay(rayCastOrigin, direction * hit.distance, Color.yellow);
+            Debug.Log("検知");
+        }
     }
 
 }
