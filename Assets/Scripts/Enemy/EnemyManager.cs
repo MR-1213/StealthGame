@@ -22,6 +22,8 @@ public class EnemyManager : MonoBehaviour
     State currentState = State.MoveToDestination;
     State targetState = State.DoNothing;
 
+    public bool isMissing = false;
+    public bool isAttacking = false;
     bool stateEnter = false;
     float stateTime = 0;
     int lastAction = 1;
@@ -158,6 +160,52 @@ public class EnemyManager : MonoBehaviour
                     return;
                 }
                 
+                return;
+            }
+
+            case State.GoToToilet: {
+                
+                if(stateEnter)
+                {
+                    navMeshAgent.enabled = false;
+                    ChangeAnimationState(Animation_State.Patrol);
+                    transform.position = point_Toilet.position;
+                    transform.rotation = point_Toilet.rotaiton;
+                }
+
+                if(stateTime >= 7.0f)
+                {
+                    navMeshAgent.enabled = true;
+                    desireDictionary[Desire.Toilet] = 0;
+                    ChangeState(State.MoveToDestination);
+                    return;
+                }
+
+                return;
+            }
+
+            case State.ChasePlayer: {
+                
+                if(isAttacking)
+                {
+                    return;//プレイヤーが攻撃範囲に入ったらAttackPlayerステートへ
+                }
+
+                if(isMissing)
+                {
+                    return;//プレイヤーを見失ったとき
+                }
+                return;
+                //ただ壁の陰に入っただけの時はどうするか考える！
+            }
+
+            case State.AttackPlayer: {
+
+                if(!isAttacking)
+                {
+                    return;//プレイヤーが攻撃範囲から離れたときはChasePlayerステートへ
+                }
+
                 return;
             }
         }       
