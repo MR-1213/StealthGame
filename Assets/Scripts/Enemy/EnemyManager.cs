@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using System;
 using UnityEngine.UI;
 using UnityEngine.AI;
+using System;
+using System.Linq;
 using DG.Tweening;
 
 public class EnemyManager : MonoBehaviour
@@ -18,19 +19,21 @@ public class EnemyManager : MonoBehaviour
 
     NavMeshAgent navMeshAgent;
     Animator animator;
+    public Text text;
 
     State currentState = State.MoveToDestination;
     State targetState = State.DoNothing;
 
-    public bool isMissing = false;
-    public bool isAttacking = false;
+
+    public bool isChasing;
+    public bool isAttacking;
     bool stateEnter = false;
     float stateTime = 0;
     int lastAction = 1;
 
     Dictionary<Desire, float> desireDictionary = new Dictionary<Desire, float>();
 
-    enum State
+    public enum State
     {
         MoveToDestination,
         GoToToilet,
@@ -90,7 +93,25 @@ public class EnemyManager : MonoBehaviour
             desireDictionary[Desire.Toilet] += Time.deltaTime / 60.0f;
         }
 
+        if(isChasing)
+        {
+            desireDictionary[Desire.Chase] = 10.0f;
+            ChangeState(State.MoveToDestination);        
+        }
+
+        if(isAttacking)
+        {
+            desireDictionary[Desire.Attack] = 10.0f;
+            ChangeState(State.MoveToDestination);
+        }
+
         IOrderedEnumerable<KeyValuePair<Desire, float>> sortedDesire = desireDictionary.OrderByDescending(i => i.Value);
+
+        text.text ="";
+        foreach(KeyValuePair<Desire, float> sortedDesireElement in sortedDesire)
+        {
+            text.text += sortedDesireElement.Key.ToString() + ":" + sortedDesireElement.Value + "\n";
+        }
 
         switch (currentState)
         {
@@ -113,10 +134,12 @@ public class EnemyManager : MonoBehaviour
                                 navMeshAgent.SetDestination(point_Player.position);
                                 navMeshAgent.speed = 3.5f;
                                 targetState = State.ChasePlayer;
+                                ChangeState(targetState);
                                 break;
                             case Desire.Attack:
                                 navMeshAgent.speed = 0;
                                 targetState = State.AttackPlayer;
+                                ChangeState(targetState);
                                 break;
                         }
                     }
@@ -126,15 +149,19 @@ public class EnemyManager : MonoBehaviour
                         {
                             case 1:
                                 navMeshAgent.SetDestination(point_1.position);
+                                lastAction = 1;
                                 break;
                             case 2:
                                 navMeshAgent.SetDestination(point_2.position);
+                                lastAction = 2;
                                 break;
                             case 3:
                                 navMeshAgent.SetDestination(point_3.position);
+                                lastAction = 3;
                                 break;
                             case 4:
                                 navMeshAgent.SetDestination(point_4.position);
+                                lastAction = 4;
                                 break;
                         }
                         navMeshAgent.speed = 2.0f;
@@ -143,7 +170,7 @@ public class EnemyManager : MonoBehaviour
                 }
 
                 ChangeAnimationState(Animation_State.Patrol);
-                if(navmeshAgent.remainingDistance <= 0.01f && !navmeshAgent.pathPending)
+                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
                 {
                     ChangeState(targetState);
                     return;
@@ -156,6 +183,14 @@ public class EnemyManager : MonoBehaviour
 
                 if(stateTime >= 5.0f)
                 {
+                    if(lastAction <= 4)
+                    {
+                        lastAction++;
+                    }
+                    else
+                    {
+                        lastAction = 1;
+                    }
                     ChangeState(State.MoveToDestination);
                     return;
                 }
@@ -170,7 +205,7 @@ public class EnemyManager : MonoBehaviour
                     navMeshAgent.enabled = false;
                     ChangeAnimationState(Animation_State.Patrol);
                     transform.position = point_Toilet.position;
-                    transform.rotation = point_Toilet.rotaiton;
+                    transform.rotation = point_Toilet.rotation;
                 }
 
                 if(stateTime >= 7.0f)
@@ -185,32 +220,54 @@ public class EnemyManager : MonoBehaviour
             }
 
             case State.ChasePlayer: {
-                
-                if(isAttacking)
+
+                if(stateEnter)
                 {
-                    return;//プレイヤーが攻撃範囲に入ったらAttackPlayerステートへ
+                    ChangeAnimationState(Animation_State.Patrol);
                 }
 
-                if(isMissing)
+                if(!isChasing && !isAttacking  && (navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending))
                 {
-                    return;//プレイヤーを見失ったとき
+                    desireDictionary[Desire.Chase] = 0;
+                    ChangeState(State.MoveToDestination);
+                    return;
                 }
+                else if(!isChasing && isAttacking)
+                {
+                    desireDictionary[Desire.Chase] = 0;
+                    desireDictionary[Desire.Attack] = 10.0f;
+                    ChangeState(State.MoveToDestination);
+                    return;
+                }
+
                 return;
-                //ただ壁の陰に入っただけの時はどうするか考える！
             }
 
             case State.AttackPlayer: {
 
-                if(!isAttacking)
+                if(stateEnter)
                 {
-                    return;//プレイヤーが攻撃範囲から離れたときはChasePlayerステートへ
+                    ChangeAnimationState(Animation_State.Attack);
+                }
+
+                if(!isAttacking && !isChasing)
+                {
+                    desireDictionary[Desire.Attack] = 0;
+                    ChangeState(State.MoveToDestination);
+                    return;
+                }
+                else if(!isAttacking && isChasing)
+                {
+                    desireDictionary[Desire.Attack] = 0;
+                    desireDictionary[Desire.Chase] = 10.0f;
+                    ChangeState(State.MoveToDestination);
+                    return;
                 }
 
                 return;
             }
         }       
     }
-
     private void LateUpdate() 
     {
         if(stateTime != 0)

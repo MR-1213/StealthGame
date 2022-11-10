@@ -33,29 +33,29 @@ public class EnemySearchPlayer : MonoBehaviour
             {
                 if(hit.collider.CompareTag("Obstacle"))
                 {
-                    Debug.Log(hit.collider.gameObject.name);
                     return;
                 }
             }
 
             if(angle <= searchAngle)
             {
-                enemyManager.ChangeMoveToPlayerState();
-                
+                transform.rotation = Quaternion.LookRotation(playerDirection);
                 double eachDistance = Math.Sqrt(Math.Pow(playerDirection.x, 2) + Math.Pow(playerDirection.z, 2));
                 if(eachDistance < (searchArea.radius / 2.0f))
                 {
-                    transform.rotation = Quaternion.LookRotation(playerDirection);
-                    enemyManager.ChangeAttackPlayerState();
+                    enemyManager.isChasing = false;
+                    enemyManager.isAttacking = true;
                 }
                 else
                 {
-                    StartCoroutine(enemyManager.MissingPlayer());
+                    enemyManager.isAttacking = false;
+                    enemyManager.isChasing = true;
                 }
             }
             else
             {
-                StartCoroutine(enemyManager.MissingPlayer());
+                enemyManager.isChasing = false;
+                enemyManager.isAttacking = false;
             }
         }    
     }
@@ -64,16 +64,7 @@ public class EnemySearchPlayer : MonoBehaviour
     {
         if(other.tag == "Player")
         {
-            StartCoroutine(enemyManager.MissingPlayer());
+            enemyManager.isChasing = false;
         }    
     }
-
-    /*#if UNITY_EDITOR
-    //　サーチする角度表示
-    private void OnDrawGizmos() {
-        Handles.color = Color.red;
-        Handles.DrawSolidArc(transform.position, Vector3.up, Quaternion.Euler(0f, -searchAngle, 0f) * transform.forward, searchAngle * 2f, searchArea.radius);
-    }
-    #endif
-    */
 }
