@@ -9,6 +9,7 @@ using DG.Tweening;
 
 public class EnemyManager : MonoBehaviour
 {
+    PlayerManager playerManager;
     
     public Transform point_1;
     public Transform point_2;
@@ -27,6 +28,7 @@ public class EnemyManager : MonoBehaviour
 
     public bool isChasing;
     public bool isAttacking;
+    public bool isExecution;
     bool stateEnter = false;
     float stateTime = 0;
     int lastAction = 1;
@@ -73,6 +75,7 @@ public class EnemyManager : MonoBehaviour
     {
         navMeshAgent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+        playerManager = GameObject.Find("Player").GetComponent<PlayerManager>();
         foreach (Desire desire in Enum.GetValues(typeof(Desire)))
         {
             desireDictionary.Add(desire, 0f);
@@ -93,16 +96,27 @@ public class EnemyManager : MonoBehaviour
             desireDictionary[Desire.Toilet] += Time.deltaTime / 60.0f;
         }
 
-        if(isChasing)
+        if(!isExecution)
         {
-            desireDictionary[Desire.Chase] = 10.0f;
-            ChangeState(State.MoveToDestination);        
-        }
+            if(isChasing)
+            {
+                desireDictionary[Desire.Chase] = 10.0f;
+                ChangeState(State.MoveToDestination);        
+            }
+            else
+            {
+                desireDictionary[Desire.Chase] = 0;
+            }
 
-        if(isAttacking)
-        {
-            desireDictionary[Desire.Attack] = 10.0f;
-            ChangeState(State.MoveToDestination);
+            if(isAttacking)
+            {
+                desireDictionary[Desire.Attack] = 10.0f;
+                ChangeState(State.MoveToDestination);
+            }
+            else
+            {
+                desireDictionary[Desire.Attack] = 0;
+            }
         }
 
         IOrderedEnumerable<KeyValuePair<Desire, float>> sortedDesire = desireDictionary.OrderByDescending(i => i.Value);
@@ -135,11 +149,13 @@ public class EnemyManager : MonoBehaviour
                                 navMeshAgent.speed = 3.5f;
                                 targetState = State.ChasePlayer;
                                 ChangeState(targetState);
+                                isExecution = true;
                                 break;
                             case Desire.Attack:
                                 navMeshAgent.speed = 0;
                                 targetState = State.AttackPlayer;
                                 ChangeState(targetState);
+                                isExecution = true;
                                 break;
                         }
                     }
@@ -226,7 +242,7 @@ public class EnemyManager : MonoBehaviour
                     ChangeAnimationState(Animation_State.Patrol);
                 }
 
-                if(!isChasing && !isAttacking  && (navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending))
+                if(!isChasing && !isAttacking)
                 {
                     desireDictionary[Desire.Chase] = 0;
                     ChangeState(State.MoveToDestination);
@@ -237,9 +253,11 @@ public class EnemyManager : MonoBehaviour
                     desireDictionary[Desire.Chase] = 0;
                     desireDictionary[Desire.Attack] = 10.0f;
                     ChangeState(State.MoveToDestination);
+                    isExecution = false;
                     return;
                 }
 
+                navMeshAgent.SetDestination(point_Player.position);
                 return;
             }
 
@@ -261,7 +279,13 @@ public class EnemyManager : MonoBehaviour
                     desireDictionary[Desire.Attack] = 0;
                     desireDictionary[Desire.Chase] = 10.0f;
                     ChangeState(State.MoveToDestination);
+                    isExecution = false;
                     return;
+                }
+
+                if(stateTime % 2.0f == 0)
+                {
+                    playerManager.hp--;
                 }
 
                 return;

@@ -37,10 +37,11 @@ public class EnemySearchPlayer : MonoBehaviour
                 }
             }
 
-            if(angle <= searchAngle)
+            double eachDistance = Math.Sqrt(Math.Pow(playerDirection.x, 2) + Math.Pow(playerDirection.z, 2));
+
+            if(angle <= searchAngle || eachDistance < 1.0)
             {
                 transform.rotation = Quaternion.LookRotation(playerDirection);
-                double eachDistance = Math.Sqrt(Math.Pow(playerDirection.x, 2) + Math.Pow(playerDirection.z, 2));
                 if(eachDistance < (searchArea.radius / 2.0f))
                 {
                     enemyManager.isChasing = false;
@@ -65,6 +66,8 @@ public class EnemySearchPlayer : MonoBehaviour
         if(other.tag == "Player")
         {
             enemyManager.isChasing = false;
+            enemyManager.isAttacking = false;
+            enemyManager.isExecution = false;
         }    
     }
 }
