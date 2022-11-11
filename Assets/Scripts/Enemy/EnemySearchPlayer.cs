@@ -65,9 +65,10 @@ public class EnemySearchPlayer : MonoBehaviour
     {
         if(other.tag == "Player")
         {
+            enemyManager.MoveToLastPlayerPosition(other.transform);
             enemyManager.isChasing = false;
             enemyManager.isAttacking = false;
-            enemyManager.isExecution = false;
+            enemyManager.isExecution = true;
         }    
     }
 }

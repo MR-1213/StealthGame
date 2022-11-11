@@ -53,6 +53,7 @@ public class EnemyManager : MonoBehaviour
 
     enum Desire
     {
+        Patrol,
         Toilet,
         Chase,
         Attack,
@@ -106,6 +107,7 @@ public class EnemyManager : MonoBehaviour
             else
             {
                 desireDictionary[Desire.Chase] = 0;
+                desireDictionary[Desire.Patrol] = 1.0f;
             }
 
             if(isAttacking)
@@ -116,6 +118,7 @@ public class EnemyManager : MonoBehaviour
             else
             {
                 desireDictionary[Desire.Attack] = 0;
+                desireDictionary[Desire.Patrol] = 1.0f;
             }
         }
 
@@ -126,6 +129,7 @@ public class EnemyManager : MonoBehaviour
         {
             text.text += sortedDesireElement.Key.ToString() + ":" + sortedDesireElement.Value + "\n";
         }
+        text.text += navMeshAgent.speed.ToString() + "\n";
 
         switch (currentState)
         {
@@ -139,6 +143,11 @@ public class EnemyManager : MonoBehaviour
                     {
                         switch(topDesireElement.Key)
                         {
+                            case Desire.Patrol:
+                                navMeshAgent.SetDestination(GetPatrolPoint(lastAction));
+                                navMeshAgent.speed = 2.0f;
+                                targetState = State.DoNothing;
+                                break;
                             case Desire.Toilet:
                                 navMeshAgent.SetDestination(point_Toilet.position);
                                 navMeshAgent.speed = 2.5f;
@@ -159,30 +168,6 @@ public class EnemyManager : MonoBehaviour
                                 break;
                         }
                     }
-                    else
-                    {
-                        switch(lastAction)
-                        {
-                            case 1:
-                                navMeshAgent.SetDestination(point_1.position);
-                                lastAction = 1;
-                                break;
-                            case 2:
-                                navMeshAgent.SetDestination(point_2.position);
-                                lastAction = 2;
-                                break;
-                            case 3:
-                                navMeshAgent.SetDestination(point_3.position);
-                                lastAction = 3;
-                                break;
-                            case 4:
-                                navMeshAgent.SetDestination(point_4.position);
-                                lastAction = 4;
-                                break;
-                        }
-                        navMeshAgent.speed = 2.0f;
-                        targetState = State.DoNothing;
-                    }
                 }
 
                 ChangeAnimationState(Animation_State.Patrol);
@@ -199,7 +184,7 @@ public class EnemyManager : MonoBehaviour
 
                 if(stateTime >= 5.0f)
                 {
-                    if(lastAction <= 4)
+                    if(lastAction < 4)
                     {
                         lastAction++;
                     }
@@ -239,10 +224,12 @@ public class EnemyManager : MonoBehaviour
 
                 if(stateEnter)
                 {
+                    navMeshAgent.SetDestination(point_Player.position);
+                    navMeshAgent.speed = 3.5f;
                     ChangeAnimationState(Animation_State.Patrol);
                 }
-
-                if(!isChasing && !isAttacking)
+                
+                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
                 {
                     desireDictionary[Desire.Chase] = 0;
                     ChangeState(State.MoveToDestination);
@@ -257,7 +244,6 @@ public class EnemyManager : MonoBehaviour
                     return;
                 }
 
-                navMeshAgent.SetDestination(point_Player.position);
                 return;
             }
 
@@ -283,14 +269,30 @@ public class EnemyManager : MonoBehaviour
                     return;
                 }
 
-                if(stateTime % 2.0f == 0)
-                {
-                    playerManager.hp--;
-                }
-
                 return;
             }
         }       
+    }
+
+    private Vector3 GetPatrolPoint(int lastAction)
+    {
+        switch(lastAction)
+        {
+            case 1:
+                return point_1.position;
+            case 2:
+                return point_2.position;
+            case 3:
+                return point_3.position;
+            case 4:
+                return point_4.position;
+        }
+        return point_1.position;
+    }
+
+    public void MoveToLastPlayerPosition(Transform player)
+    {
+        navMeshAgent.SetDestination(player.position);
     }
     private void LateUpdate() 
     {

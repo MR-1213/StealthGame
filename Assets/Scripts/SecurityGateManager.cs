@@ -40,6 +40,7 @@ public class SecurityGateManager : MonoBehaviour
         {
             Debug.DrawRay(rayCastOrigin, direction * hit.distance, Color.yellow);
             Debug.Log("検知された・・・");
+            enemyManager.isExecution = false;
             enemyManager.isAttacking = false;
             enemyManager.isChasing = true;
         }
