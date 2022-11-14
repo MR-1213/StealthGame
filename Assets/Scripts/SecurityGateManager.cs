@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class SecurityGateManager : MonoBehaviour
 {
-    EnemyManager enemyManager;
+    EnemySearchPlayer enemySearchPlayer;
 
     LineRenderer lineRenderer;
     Vector3 direction;
@@ -13,7 +13,7 @@ public class SecurityGateManager : MonoBehaviour
 
     private void Start() 
     {
-        enemyManager = GameObject.Find("Enemy").GetComponent<EnemyManager>();
+        enemySearchPlayer = GameObject.Find("Enemy").GetComponent<EnemySearchPlayer>();
 
         direction = Vector3.right;
         length = 8.0f;
@@ -40,9 +40,7 @@ public class SecurityGateManager : MonoBehaviour
         {
             Debug.DrawRay(rayCastOrigin, direction * hit.distance, Color.yellow);
             Debug.Log("検知された・・・");
-            enemyManager.isExecution = false;
-            enemyManager.isAttacking = false;
-            enemyManager.isChasing = true;
+            enemySearchPlayer.SetDetectPosition(hit);
         }
     }
 

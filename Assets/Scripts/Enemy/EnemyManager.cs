@@ -9,8 +9,6 @@ using DG.Tweening;
 
 public class EnemyManager : MonoBehaviour
 {
-    PlayerManager playerManager;
-    
     public Transform point_1;
     public Transform point_2;
     public Transform point_3;
@@ -18,45 +16,46 @@ public class EnemyManager : MonoBehaviour
     public Transform point_Toilet;
     public Transform point_Player;
 
-    NavMeshAgent navMeshAgent;
-    Animator animator;
+    private NavMeshAgent navMeshAgent;
+    private Animator animator;
     public Text text;
 
-    State currentState = State.MoveToDestination;
-    State targetState = State.DoNothing;
+    private State currentState = State.MoveToDestination;
+    private State targetState = State.DoNothing;
+    private Points currentPoint = Points.Point1;
 
-
-    public bool isChasing;
-    public bool isAttacking;
-    public bool isExecution;
-    bool stateEnter = false;
-    float stateTime = 0;
-    int lastAction = 1;
+    public bool isFounding;
+    private bool stateEnter = false;
+    private float stateTime = 0;
 
     Dictionary<Desire, float> desireDictionary = new Dictionary<Desire, float>();
 
-    public enum State
+    enum State
     {
         MoveToDestination,
         GoToToilet,
-        ChasePlayer,
-        AttackPlayer,
+        ChasingAndAttacking,
         DoNothing,
+    }
+
+    enum Points
+    {
+        Point1,
+        Point2,
+        Point3,
+        Point4,
     }
 
     enum Animation_State
     {
         Patrol = 0,
         Toilet = 1,
-        Attack = 2,
     }
 
     enum Desire
     {
-        Patrol,
         Toilet,
-        Chase,
-        Attack,
+        ChaseAndAttack,
     }
 
     private void ChangeState(State newState)
@@ -65,6 +64,11 @@ public class EnemyManager : MonoBehaviour
         stateEnter = true;
         stateTime = 0;
         Debug.Log(currentState.ToString());
+    }
+
+    private void ChangePoint(Points newPoint)
+    {
+        currentPoint = newPoint;
     }
 
     private void ChangeAnimationState(Animation_State state)
@@ -76,7 +80,6 @@ public class EnemyManager : MonoBehaviour
     {
         navMeshAgent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
-        playerManager = GameObject.Find("Player").GetComponent<PlayerManager>();
         foreach (Desire desire in Enum.GetValues(typeof(Desire)))
         {
             desireDictionary.Add(desire, 0f);
@@ -97,29 +100,9 @@ public class EnemyManager : MonoBehaviour
             desireDictionary[Desire.Toilet] += Time.deltaTime / 60.0f;
         }
 
-        if(!isExecution)
+        if(isFounding)
         {
-            if(isChasing)
-            {
-                desireDictionary[Desire.Chase] = 10.0f;
-                ChangeState(State.MoveToDestination);        
-            }
-            else
-            {
-                desireDictionary[Desire.Chase] = 0;
-                desireDictionary[Desire.Patrol] = 1.0f;
-            }
-
-            if(isAttacking)
-            {
-                desireDictionary[Desire.Attack] = 10.0f;
-                ChangeState(State.MoveToDestination);
-            }
-            else
-            {
-                desireDictionary[Desire.Attack] = 0;
-                desireDictionary[Desire.Patrol] = 1.0f;
-            }
+            desireDictionary[Desire.ChaseAndAttack] = 100;
         }
 
         IOrderedEnumerable<KeyValuePair<Desire, float>> sortedDesire = desireDictionary.OrderByDescending(i => i.Value);
@@ -131,49 +114,55 @@ public class EnemyManager : MonoBehaviour
         }
         text.text += navMeshAgent.speed.ToString() + "\n";
 
-        switch (currentState)
+        switch(currentState)
         {
             case State.MoveToDestination: {
-                
+
                 if(stateEnter)
                 {
-                    var topDesireElement = sortedDesire.ElementAt(0);
+                    var topDesireElement = sortedDesire.ElementAt(0); //最も欲求の大きいものを取得
 
                     if(topDesireElement.Value >= 1.0f)
                     {
                         switch(topDesireElement.Key)
                         {
-                            case Desire.Patrol:
-                                navMeshAgent.SetDestination(GetPatrolPoint(lastAction));
-                                navMeshAgent.speed = 2.0f;
-                                targetState = State.DoNothing;
-                                break;
                             case Desire.Toilet:
                                 navMeshAgent.SetDestination(point_Toilet.position);
-                                navMeshAgent.speed = 2.5f;
+                                navMeshAgent.speed = 3.0f;
                                 targetState = State.GoToToilet;
                                 break;
-                            case Desire.Chase:
-                                navMeshAgent.SetDestination(point_Player.position);
-                                navMeshAgent.speed = 3.5f;
-                                targetState = State.ChasePlayer;
-                                ChangeState(targetState);
-                                isExecution = true;
-                                break;
-                            case Desire.Attack:
-                                navMeshAgent.speed = 0;
-                                targetState = State.AttackPlayer;
-                                ChangeState(targetState);
-                                isExecution = true;
+                            case Desire.ChaseAndAttack:
+                                targetState = State.ChasingAndAttacking;
                                 break;
                         }
+                    }
+                    else
+                    {
+                        switch(currentPoint)
+                        {
+                            case Points.Point1:
+                                navMeshAgent.SetDestination(point_1.position);
+                                break;
+                            case Points.Point2:
+                                navMeshAgent.SetDestination(point_2.position);
+                                break;
+                            case Points.Point3:
+                                navMeshAgent.SetDestination(point_3.position);
+                                break;
+                            case Points.Point4:
+                                navMeshAgent.SetDestination(point_4.position);
+                                break;
+                        }
+                        navMeshAgent.speed = 2.0f;
+                        targetState = State.DoNothing;
                     }
                 }
 
                 ChangeAnimationState(Animation_State.Patrol);
-                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
+
+                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending) //目的地に到着したら
                 {
-                    ChangeState(targetState);
+                    ChangeState(targetState); //targetStateの行動を次の行動とする
                     return;
                 }
 
@@ -182,34 +171,31 @@ public class EnemyManager : MonoBehaviour
 
             case State.DoNothing: {
 
-                if(stateTime >= 5.0f)
+                if(stateTime >= 4.0f)
                 {
-                    if(lastAction < 4)
-                    {
-                        lastAction++;
-                    }
-                    else
-                    {
-                        lastAction = 1;
-                    }
                     ChangeState(State.MoveToDestination);
-                    return;
+                    int nextPoint = (int)currentPoint + 1;
+                    if(nextPoint >= Enum.GetNames(typeof(Points)).Length)
+                    {
+                        currentPoint = 0;
+                    }
+                    ChangePoint((Points)nextPoint);
                 }
-                
+
                 return;
             }
 
             case State.GoToToilet: {
-                
+
                 if(stateEnter)
                 {
                     navMeshAgent.enabled = false;
-                    ChangeAnimationState(Animation_State.Patrol);
+                    ChangeAnimationState(Animation_State.Toilet);
                     transform.position = point_Toilet.position;
                     transform.rotation = point_Toilet.rotation;
                 }
 
-                if(stateTime >= 7.0f)
+                if(stateTime >= 4.0f)
                 {
                     navMeshAgent.enabled = true;
                     desireDictionary[Desire.Toilet] = 0;
@@ -220,80 +206,20 @@ public class EnemyManager : MonoBehaviour
                 return;
             }
 
-            case State.ChasePlayer: {
-
-                if(stateEnter)
-                {
-                    navMeshAgent.SetDestination(point_Player.position);
-                    navMeshAgent.speed = 3.5f;
-                    ChangeAnimationState(Animation_State.Patrol);
-                }
+            case State.ChasingAndAttacking: {
                 
-                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
+                if(!isFounding)
                 {
-                    desireDictionary[Desire.Chase] = 0;
+                    desireDictionary[Desire.ChaseAndAttack] = 0;
                     ChangeState(State.MoveToDestination);
-                    return;
-                }
-                else if(!isChasing && isAttacking)
-                {
-                    desireDictionary[Desire.Chase] = 0;
-                    desireDictionary[Desire.Attack] = 10.0f;
-                    ChangeState(State.MoveToDestination);
-                    isExecution = false;
-                    return;
                 }
 
                 return;
             }
-
-            case State.AttackPlayer: {
-
-                if(stateEnter)
-                {
-                    ChangeAnimationState(Animation_State.Attack);
-                }
-
-                if(!isAttacking && !isChasing)
-                {
-                    desireDictionary[Desire.Attack] = 0;
-                    ChangeState(State.MoveToDestination);
-                    return;
-                }
-                else if(!isAttacking && isChasing)
-                {
-                    desireDictionary[Desire.Attack] = 0;
-                    desireDictionary[Desire.Chase] = 10.0f;
-                    ChangeState(State.MoveToDestination);
-                    isExecution = false;
-                    return;
-                }
-
-                return;
-            }
-        }       
-    }
-
-    private Vector3 GetPatrolPoint(int lastAction)
-    {
-        switch(lastAction)
-        {
-            case 1:
-                return point_1.position;
-            case 2:
-                return point_2.position;
-            case 3:
-                return point_3.position;
-            case 4:
-                return point_4.position;
         }
-        return point_1.position;
+
     }
 
-    public void MoveToLastPlayerPosition(Transform player)
-    {
-        navMeshAgent.SetDestination(player.position);
-    }
     private void LateUpdate() 
     {
         if(stateTime != 0)
