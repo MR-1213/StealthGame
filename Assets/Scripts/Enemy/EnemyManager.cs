@@ -10,6 +10,8 @@ using DG.Tweening;
 public class EnemyManager : MonoBehaviour
 {
     EnemySearchPlayer enemySearchPlayer;
+
+    [Header("Destinations")]
     public Transform point_1;
     public Transform point_2;
     public Transform point_3;
@@ -17,18 +19,21 @@ public class EnemyManager : MonoBehaviour
     public Transform point_Toilet;
     public Transform point_Player;
 
+
     private NavMeshAgent navMeshAgent;
     private Animator animator;
-    public Text text;
+    public Text text; //デバッグ用のパラメータ表示テキスト
 
+    /* ステートに関わるパラメータ */
     private State currentState = State.MoveToDestination;
     private State targetState = State.DoNothing;
     private Points currentPoint = Points.Point1;
-
     public bool isFounding;
-    private bool stateEnter = false;
-    private float stateTime = 0;
-    public float standByTime = 0;
+    //敵に見つかった場合にtrueになる。コライダーの外に出るかChasingAndAttackingステートから出るfalseになる。
+    private bool stateEnter = false; //ステートに入った最初の1フレームだけtrueになる。
+    private float stateTime = 0; //ステートに入ってからの経過時間。
+    private float maxStandByTime = 3.0f; //EnemyがPlayerを見失った際に待機する時間。この時間が経過したのち、行動を再開する。
+    public float standByTime = 0; //待機し始めてからの経過時間。
 
     Dictionary<Desire, float> desireDictionary = new Dictionary<Desire, float>();
 
@@ -59,7 +64,10 @@ public class EnemyManager : MonoBehaviour
         Toilet,
         ChaseAndAttack,
     }
-
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="newState">次のステート</param>
     private void ChangeState(State newState)
     {
         currentState = newState;
@@ -229,7 +237,7 @@ public class EnemyManager : MonoBehaviour
                 if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
                 {
                     standByTime += Time.deltaTime;
-                    if(standByTime >= 3.0f && !enemySearchPlayer.isDetecting)
+                    if(standByTime >= maxStandByTime && !enemySearchPlayer.isDetecting)
                     {
                         desireDictionary[Desire.ChaseAndAttack] = 0;
                         ChangeState(State.MoveToDestination);
