@@ -9,6 +9,7 @@ using DG.Tweening;
 
 public class EnemyManager : MonoBehaviour
 {
+    EnemySearchPlayer enemySearchPlayer;
     public Transform point_1;
     public Transform point_2;
     public Transform point_3;
@@ -27,6 +28,7 @@ public class EnemyManager : MonoBehaviour
     public bool isFounding;
     private bool stateEnter = false;
     private float stateTime = 0;
+    public float standByTime = 0;
 
     Dictionary<Desire, float> desireDictionary = new Dictionary<Desire, float>();
 
@@ -66,9 +68,15 @@ public class EnemyManager : MonoBehaviour
         Debug.Log(currentState.ToString());
     }
 
+    public void ChangeToChasingAndAttackingState()
+    {
+        ChangeState(State.ChasingAndAttacking);
+    }
+
     private void ChangePoint(Points newPoint)
     {
         currentPoint = newPoint;
+        Debug.Log(currentPoint.ToString());
     }
 
     private void ChangeAnimationState(Animation_State state)
@@ -78,6 +86,7 @@ public class EnemyManager : MonoBehaviour
 
     private void Start()
     {
+        enemySearchPlayer = GetComponent<EnemySearchPlayer>();
         navMeshAgent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
         foreach (Desire desire in Enum.GetValues(typeof(Desire)))
@@ -97,7 +106,7 @@ public class EnemyManager : MonoBehaviour
 
         if(currentState != State.GoToToilet)
         {
-            desireDictionary[Desire.Toilet] += Time.deltaTime / 60.0f;
+            desireDictionary[Desire.Toilet] += Time.deltaTime / 1200.0f;
         }
 
         if(isFounding)
@@ -113,6 +122,8 @@ public class EnemyManager : MonoBehaviour
             text.text += sortedDesireElement.Key.ToString() + ":" + sortedDesireElement.Value + "\n";
         }
         text.text += navMeshAgent.speed.ToString() + "\n";
+        text.text += stateTime.ToString() + "\n";
+        text.text += standByTime.ToString() + "\n";
 
         switch(currentState)
         {
@@ -177,7 +188,7 @@ public class EnemyManager : MonoBehaviour
                     int nextPoint = (int)currentPoint + 1;
                     if(nextPoint >= Enum.GetNames(typeof(Points)).Length)
                     {
-                        currentPoint = 0;
+                        nextPoint = 0;
                     }
                     ChangePoint((Points)nextPoint);
                 }
@@ -212,6 +223,24 @@ public class EnemyManager : MonoBehaviour
                 {
                     desireDictionary[Desire.ChaseAndAttack] = 0;
                     ChangeState(State.MoveToDestination);
+                    return;
+                }
+
+                if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
+                {
+                    standByTime += Time.deltaTime;
+                    if(standByTime >= 3.0f && !enemySearchPlayer.isDetecting)
+                    {
+                        desireDictionary[Desire.ChaseAndAttack] = 0;
+                        ChangeState(State.MoveToDestination);
+                        isFounding = false;
+                        standByTime = 0;
+                        return;
+                    }
+                }
+                else
+                {
+                    standByTime = 0;
                 }
 
                 return;
