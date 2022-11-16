@@ -5,6 +5,7 @@ using UnityEngine;
 public class SecurityGateManager : MonoBehaviour
 {
     EnemySearchPlayer enemySearchPlayer;
+    SecurityLightManager securityLightManager;
 
     LineRenderer lineRenderer;
     Vector3 direction;
@@ -14,6 +15,7 @@ public class SecurityGateManager : MonoBehaviour
     private void Start() 
     {
         enemySearchPlayer = GameObject.Find("Enemy").GetComponent<EnemySearchPlayer>();
+        securityLightManager = GameObject.Find("RotationLight").GetComponent<SecurityLightManager>();
 
         direction = Vector3.right;
         length = 8.0f;
@@ -40,6 +42,7 @@ public class SecurityGateManager : MonoBehaviour
         {
             Debug.DrawRay(rayCastOrigin, direction * hit.distance, Color.yellow);
             Debug.Log("検知された・・・");
+            securityLightManager.Alert();
             enemySearchPlayer.SetDetectPosition(hit);
         }
     }
