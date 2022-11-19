@@ -25,7 +25,7 @@ public class PlayerManager : MonoBehaviour
         inputManager = GetComponent<InputManager>();
         playerLocomotion = GetComponent<PlayerLocomotion>();
         cameraManager = FindObjectOfType<CameraManager>();
-        Cursor.lockState = CursorLockMode.Locked; //カーソルを画面中央に固定 => 画面外に出ないようにする
+        Cursor.lockState = CursorLockMode.Confined; //カーソルを画面中央に固定 => 画面外に出ないようにする
         hpSlider.maxValue = maxHP;
         hpSlider.value = maxHP;
         currentHP = maxHP;

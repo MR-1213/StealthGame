@@ -6,6 +6,7 @@ public class SecurityGateManager : MonoBehaviour
 {
     EnemySearchPlayer enemySearchPlayer;
     SecurityLightManager securityLightManager;
+    SecurityGateButtonManager securityGateButtonManager;
 
     LineRenderer lineRenderer;
     Vector3 direction;
@@ -15,7 +16,8 @@ public class SecurityGateManager : MonoBehaviour
     private void Start() 
     {
         enemySearchPlayer = GameObject.Find("Enemy").GetComponent<EnemySearchPlayer>();
-        securityLightManager = GameObject.Find("RotationLight").GetComponent<SecurityLightManager>();
+        securityLightManager = GameObject.Find("SecurityLamps").GetComponent<SecurityLightManager>();
+        securityGateButtonManager = GameObject.Find("SwitchCylinder").GetComponent<SecurityGateButtonManager>();
 
         direction = Vector3.right;
         length = 8.0f;
@@ -41,9 +43,14 @@ public class SecurityGateManager : MonoBehaviour
         if(Physics.Raycast(rayCastOrigin, direction, out hit, length, playerLayer))
         {
             Debug.DrawRay(rayCastOrigin, direction * hit.distance, Color.yellow);
-            Debug.Log("検知された・・・");
             securityLightManager.Alert();
             enemySearchPlayer.SetDetectPosition(hit);
+        }
+
+        if(securityGateButtonManager.isPush)
+        {
+            securityLightManager.DisableAlert();
+            Destroy(this.gameObject);
         }
     }
 
