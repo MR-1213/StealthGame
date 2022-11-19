@@ -251,6 +251,7 @@ public class EnemyManager : MonoBehaviour
                     standByTime = 0;
                 }
 
+                navMeshAgent.SetDestination(point_Player.position);
                 return;
             }
         }

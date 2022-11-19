@@ -6,6 +6,11 @@ using DG.Tweening;
 public class SecurityLightManager : MonoBehaviour
 {
     private bool isAlert;
+
+    private void Start() 
+    {
+        DG.Tweening.DOTween.SetTweensCapacity(tweenersCapacity:800, sequencesCapacity:200);
+    }
     public void Alert()
     {
         if(this.gameObject.name == "RotationLight")
