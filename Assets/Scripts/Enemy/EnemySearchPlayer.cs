@@ -13,9 +13,10 @@ public class EnemySearchPlayer : MonoBehaviour
 
     NavMeshAgent navMeshAgent;
     Animator animator;
+    private AudioSource audioSource;
 
     [SerializeField]
-    private SphereCollider searchArea; //コライダー内で
+    private SphereCollider searchArea; 
     [SerializeField]
     private float searchAngle = 120f;
     public LayerMask obstacleLayer;
@@ -29,6 +30,7 @@ public class EnemySearchPlayer : MonoBehaviour
         playerManager = GameObject.Find("Player").GetComponent<PlayerManager>();
         navMeshAgent = GetComponent<NavMeshAgent>();
         animator = GetComponent<Animator>();
+        audioSource = GetComponent<AudioSource>();
     }
     
     private void OnTriggerEnter(Collider other) 
@@ -95,9 +97,10 @@ public class EnemySearchPlayer : MonoBehaviour
                 }
                 navMeshAgent.SetDestination(other.transform.position);
 
-                if(attackInterval < 1.0f) return;
+                if(attackInterval < 3.0f) return;
                 playerManager.DecreaseHP();
                 attackInterval = 0;
+                audioSource.PlayOneShot(audioSource.clip);
             }
         }    
     }
@@ -106,8 +109,6 @@ public class EnemySearchPlayer : MonoBehaviour
     {
         if(other.CompareTag("Player") && navMeshAgent.enabled == true)
         {
-            Vector3 lastPlayerPosition = other.transform.position;
-            navMeshAgent.SetDestination(lastPlayerPosition);
             enemyManager.isFounding = false;
             isDetecting = false;
         }    

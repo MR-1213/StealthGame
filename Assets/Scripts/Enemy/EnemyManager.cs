@@ -29,7 +29,7 @@ public class EnemyManager : MonoBehaviour
     private State targetState = State.DoNothing;
     private Points currentPoint = Points.Point1;
     public bool isFounding;
-    //敵に見つかった場合にtrueになる。コライダーの外に出るかChasingAndAttackingステートから出るfalseになる。
+    //敵に見つかった場合にtrueになる。コライダーの外に出るかChasingAndAttackingステートから出るとfalseになる。
     private bool stateEnter = false; //ステートに入った最初の1フレームだけtrueになる。
     private float stateTime = 0; //ステートに入ってからの経過時間。
     private float maxStandByTime = 3.0f; //EnemyがPlayerを見失った際に待機する時間。この時間が経過したのち、行動を再開する。
@@ -230,7 +230,12 @@ public class EnemyManager : MonoBehaviour
                 if(!isFounding)
                 {
                     desireDictionary[Desire.ChaseAndAttack] = 0;
-                    ChangeState(State.MoveToDestination);
+
+                    if(stateEnter)
+                    {
+                        navMeshAgent.SetDestination(point_Player.position);
+                        Debug.Log("stateEnter");
+                    } 
                     return;
                 }
 
@@ -251,6 +256,7 @@ public class EnemyManager : MonoBehaviour
                     standByTime = 0;
                 }
 
+                Debug.Log(navMeshAgent.remainingDistance);
                 navMeshAgent.SetDestination(point_Player.position);
                 return;
             }

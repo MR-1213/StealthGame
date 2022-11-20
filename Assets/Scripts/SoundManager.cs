@@ -26,7 +26,6 @@ public class SoundManager : MonoBehaviour
         var volume = Mathf.Clamp(Mathf.Log10(value) * 20f,-80f,0f);
         //audioMixerに代入
         audioMixer.SetFloat("BGM",volume);
-        Debug.Log($"BGM:{volume}");
     }
 
     //SE

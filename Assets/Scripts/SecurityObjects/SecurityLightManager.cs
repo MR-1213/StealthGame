@@ -10,7 +10,8 @@ public class SecurityLightManager : MonoBehaviour
     public Transform safe_Lamp;
     private Tweener tweener;
     private bool isAlert;
-    private float alertTime;
+    private bool isRotation = false;
+    private bool alertEnter = true;
 
     private void Start() 
     {
@@ -29,21 +30,23 @@ public class SecurityLightManager : MonoBehaviour
 
     private void Update() 
     {
-        alertTime += Time.deltaTime;
         if(isAlert)
         {
-            tweener = entrance_Lamp.transform.DORotate(new Vector3(0,360,0), 5, RotateMode.LocalAxisAdd).SetLoops(-1).Play();
-            safe_Lamp.transform.DORotate(new Vector3(0,360,0), 5, RotateMode.LocalAxisAdd).SetLoops(-1).Play();
-
-            if(alertTime > 1.0f)
+            if(alertEnter)
             {
-                audioSource.PlayOneShot(audioSource.clip);
-                alertTime = 0;
+                audioSource.Play();
+                alertEnter = false;
             }
+
+            entrance_Lamp.transform.DORotate(new Vector3(0,360,0), 5, RotateMode.LocalAxisAdd).SetLoops(-1, LoopType.Restart).SetLink(entrance_Lamp.gameObject);
+            safe_Lamp.transform.DORotate(new Vector3(0,360,0), 5, RotateMode.LocalAxisAdd).SetLoops(-1, LoopType.Restart).SetLink(safe_Lamp.gameObject);
+            isRotation = true;
         }
-        else if(tweener != null)
+        else if(isRotation && entrance_Lamp != null)
         {
-            tweener.Kill();
+            audioSource.Stop();
+            Destroy(entrance_Lamp.gameObject);
+            Destroy(safe_Lamp.gameObject);
         }
     }
 }
