@@ -35,11 +35,15 @@ public class SecurityLightManager : MonoBehaviour
             if(alertEnter)
             {
                 audioSource.Play();
+                entrance_Lamp.transform.DORotate(new Vector3(0,360,0), 1, RotateMode.LocalAxisAdd)
+                                    .SetLoops(-1, LoopType.Restart)
+                                    .SetLink(entrance_Lamp.gameObject);
+                safe_Lamp.transform.DORotate(new Vector3(0,360,0), 1, RotateMode.LocalAxisAdd)
+                                    .SetLoops(-1, LoopType.Restart)
+                                    .SetLink(safe_Lamp.gameObject);
                 alertEnter = false;
             }
 
-            entrance_Lamp.transform.DORotate(new Vector3(0,360,0), 5, RotateMode.LocalAxisAdd).SetLoops(-1, LoopType.Restart).SetLink(entrance_Lamp.gameObject);
-            safe_Lamp.transform.DORotate(new Vector3(0,360,0), 5, RotateMode.LocalAxisAdd).SetLoops(-1, LoopType.Restart).SetLink(safe_Lamp.gameObject);
             isRotation = true;
         }
         else if(isRotation && entrance_Lamp != null)

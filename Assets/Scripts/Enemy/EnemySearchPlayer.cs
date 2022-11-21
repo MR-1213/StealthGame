@@ -18,7 +18,7 @@ public class EnemySearchPlayer : MonoBehaviour
     [SerializeField]
     private SphereCollider searchArea; 
     [SerializeField]
-    private float searchAngle = 120f;
+    private float searchAngle = 90.0f;
     public LayerMask obstacleLayer;
     public bool isDetecting = false;
     private float attackInterval;
@@ -109,8 +109,7 @@ public class EnemySearchPlayer : MonoBehaviour
     {
         if(other.CompareTag("Player") && navMeshAgent.enabled == true)
         {
-            enemyManager.isFounding = false;
-            isDetecting = false;
+            navMeshAgent.SetDestination(other.transform.position);
         }    
     }
 
