@@ -230,17 +230,14 @@ public class EnemyManager : MonoBehaviour
                 if(!isFounding)
                 {
                     desireDictionary[Desire.ChaseAndAttack] = 0;
-
-                    if(stateEnter)
-                    {
-                        navMeshAgent.SetDestination(point_Player.position);
-                        Debug.Log("stateEnter");
-                    } 
+                    ChangeState(State.MoveToDestination);
                     return;
                 }
 
                 if(navMeshAgent.remainingDistance <= 0.01f && !navMeshAgent.pathPending)
                 {
+                    isFounding = false;
+                    enemySearchPlayer.isDetecting = false;
                     standByTime += Time.deltaTime;
                     if(standByTime >= maxStandByTime && !enemySearchPlayer.isDetecting)
                     {
@@ -255,9 +252,7 @@ public class EnemyManager : MonoBehaviour
                 {
                     standByTime = 0;
                 }
-
-                Debug.Log(navMeshAgent.remainingDistance);
-                navMeshAgent.SetDestination(point_Player.position);
+                
                 return;
             }
         }
